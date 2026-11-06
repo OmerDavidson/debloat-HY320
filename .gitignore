@@ -1,0 +1,14 @@
+# Reference repositories: inspection only, never part of the application build.
+/references/cleanyourtv/
+/references/tellyscope/
+
+# Local device evidence, proprietary APKs, and generated files.
+/diagnostics/
+/research/vendor-settings/
+/research/tools/
+**/__pycache__/
+*.pyc
+*.log
+/launcher/build/
+/launcher/local-debug.keystore
+/launcher/test-results/

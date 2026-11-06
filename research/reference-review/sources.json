@@ -1,0 +1,20 @@
+[
+  {
+    "name": "cleanyourtv",
+    "url": "https://github.com/Gathin23/cleanyourtv.git",
+    "commit": "fc148d5a9707b30e8f49f489625947421740dc55",
+    "license_sha256": "e0941eca3b403700368b495fd9a91af4e15242fabb992ed27af95c0d4cdc6f83",
+    "inspected_utc": "2026-11-05T17:05:57.189951+00:00",
+    "source_or_assets_copied": false,
+    "device_scripts_executed": false
+  },
+  {
+    "name": "tellyscope",
+    "url": "https://github.com/man15h/tellyscope.git",
+    "commit": "ec9058de10fdc9c06ec4deeac22331ab0a960684",
+    "license_sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986",
+    "inspected_utc": "2026-11-05T17:05:57.209413+00:00",
+    "source_or_assets_copied": false,
+    "device_scripts_executed": false
+  }
+]

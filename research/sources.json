@@ -1,0 +1,20 @@
+[
+  {
+    "file": "hy320-linux-board.md",
+    "url": "https://raw.githubusercontent.com/well0nez/allwinner-h713-linux/main/boards/hy320/README.md",
+    "accessed_utc": "2026-11-05T16:36:46.362492+00:00",
+    "sha256": "4862569cec29f566d182831a582bce9ffd9f884f00faebb2c3b5c0dabcd36228"
+  },
+  {
+    "file": "h713-linux-overview.md",
+    "url": "https://raw.githubusercontent.com/well0nez/allwinner-h713-linux/main/README.md",
+    "accessed_utc": "2026-11-05T16:36:47.653871+00:00",
+    "sha256": "1148d0a673d24feb7dc861681284a6090a13ecfcd62589f76ff60d5e3c6f6b44"
+  },
+  {
+    "file": "magcubic-root-readme.md",
+    "url": "https://raw.githubusercontent.com/well0nez/magcubic-root/master/README.md",
+    "accessed_utc": "2026-11-05T16:36:49.004815+00:00",
+    "sha256": "7042f11982ad7c07c06db88c5bddc1097c0dd47f9e4b3e553173aaf9f207f781"
+  }
+]
