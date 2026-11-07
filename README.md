@@ -2,25 +2,50 @@
 
 A lightweight, native Android launcher for our Allwinner H713 / Android 11 HY320, plus reproducible ADB diagnostics. Built for a 1 GB device: bounded icons, native views, no WebView, no downloaded backgrounds, and no continuous background monitoring.
 
-- [Launcher build, installation and integration notes](launcher/README.md)
-- [Current raised tile focus](launcher/RAISED_FOCUS_TEST_REPORT.md)
-- [Row/tab motion](launcher/MOTION_TEST_REPORT.md)
-- [Borderless tiles and blurred row preview](launcher/BORDERLESS_PREVIEW_TEST_REPORT.md)
-- [Project goals and agent workflow](AGENTS.md)
-- [Earlier home-row visibility fix](launcher/ROW_VISIBILITY_TEST_REPORT.md)
-- [Cinematic home and launcher-button checks](launcher/CINEMATIC_TEST_REPORT.md)
-- [Earlier home redesign measurements](launcher/REDESIGN_TEST_REPORT.md)
-- [Original device diagnostic report](DIAGNOSTIC_REPORT.md)
-- [First installed prototype test](launcher/TEST_REPORT.md)
-- [Native projector-control investigation](launcher/PROJECTOR_CONTROLS.md)
+## Screenshots
 
-Build locally with the installed Android SDK and JDK:
+![Vibe Home on the HY320 with favorite pins, a focused tile, and the blurred next row](docs/screenshots/home.png)
 
-```sh
-python3 launcher/build.py
-```
+![Edit mode on the HY320 with remote controls above the locked favorites](docs/screenshots/edit-mode.png)
 
-Stock HOME remains selected after installation. Settings contains buttons for choosing Vibe Home or returning to the original launcher through Android’s default-home UI. The optional HOME entry stays disabled until requested. Projector calibration, hardware services and system-package states are preserved; rooting, flashing, system-package changes and projection-value writes remain outside the approved work.
+The Edit screenshot predates the pin placement shown in the Home screenshot.
+
+## Install the launcher
+
+These steps build a locally signed APK and install it with ADB. The tested projector is the Allwinner H713 HY320 running Android 11 and firmware `UI_Veng.projector.20241225.164550`.
+
+1. **Install the build tools.** You need Python 3, JDK 17, and an Android SDK with Platform 34, Build Tools 34.0.0, and Platform Tools. Put `adb`, `javac`, and `keytool` on your PATH. The build defaults to `~/Library/Android/sdk` on macOS. Set `ANDROID_SDK_ROOT` if your SDK is elsewhere.
+
+2. **Clone the repository and build the APK.**
+
+   ```sh
+   git clone https://github.com/oshriagronov/debloat-HY320.git
+   cd debloat-HY320
+   python3 launcher/build.py
+   ```
+
+   The APK is written to `launcher/build/vibe-home.apk`. Keep the generated `launcher/local-debug.keystore` private and reuse it for updates. Android requires updates to use the same signing key as the installed copy.
+
+3. **Connect to the projector.** Enable ADB debugging in the projector’s Developer options. For a projector with network ADB enabled, connect the computer and projector to the same network, replace the example address with your projector’s address, and approve the debugging prompt if it appears.
+
+   ```sh
+   projector=192.168.1.50:5555
+   adb connect "$projector"
+   adb devices -l
+   ```
+
+   Check that your projector is listed as `device` before proceeding. For a USB ADB connection, set `projector` to the serial shown by `adb devices -l` and skip `adb connect`.
+
+4. **Install and open Vibe Home.**
+
+   ```sh
+   adb -s "$projector" install --no-incremental -r launcher/build/vibe-home.apk
+   adb -s "$projector" shell am start -W -n com.vibehome.launcher/.MainActivity
+   ```
+
+5. **Choose the default launcher if you want Home to open Vibe.** In Vibe, go to **Settings → About → Use Vibe Home**, then confirm the choice in Android. To switch back, use **Settings → About → Use original launcher** and select **HTCLauncherEN** if Android asks. Installing the APK preserves the current default.
+
+See the [launcher README](launcher/README.md) for build overrides and device checks, and the [diagnostic report](DIAGNOSTIC_REPORT.md) for the tested hardware and firmware.
 
 ## Credits and inspiration
 
