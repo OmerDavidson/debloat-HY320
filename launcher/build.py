@@ -36,6 +36,7 @@ def main():
     run(TOOLS / "d8", "--lib", ANDROID, "--min-api", "26", "--output", BUILD / "dex",
         *sorted((BUILD / "classes").rglob("*.class")))
     with zipfile.ZipFile(BUILD / "unsigned.apk", "a", compression=zipfile.ZIP_DEFLATED) as archive:
+        archive.write(ROOT / "CLEANYOURTV-LICENSE.txt", "META-INF/CLEANYOURTV-LICENSE.txt")
         for dex in sorted((BUILD / "dex").glob("*.dex")):
             archive.write(dex, dex.name)
     run(TOOLS / "zipalign", "-f", "4", BUILD / "unsigned.apk", BUILD / "aligned.apk")
@@ -56,7 +57,7 @@ def main():
               "source_sha256": {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest()
                                 for p in sorted((ROOT / "src").rglob("*.java"))
                                 + sorted((ROOT / "res").rglob("*.xml"))
-                                + [ROOT / "AndroidManifest.xml", ROOT / "build.py"]}}
+                                + [ROOT / "AndroidManifest.xml", ROOT / "build.py", ROOT / "CLEANYOURTV-LICENSE.txt"]}}
     (BUILD / "artifact.json").write_text(json.dumps(record, indent=2) + "\n")
     print(json.dumps(record, indent=2))
 

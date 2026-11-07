@@ -8,6 +8,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
+import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.StateListDrawable;
 import android.view.View;
@@ -49,6 +50,35 @@ final class Ui {
             {android.R.attr.state_pressed}, {android.R.attr.state_focused}, {}
         }, new int[]{DARK, DARK, normal});
     }
+    static void menuIcon(TextView view, int icon) {
+        view.setCompoundDrawablesRelativeWithIntrinsicBounds(icon, 0, 0, 0);
+        view.setCompoundDrawablePadding(dp(view.getContext(), 8));
+        ColorStateList colors = new ColorStateList(new int[][]{
+            {android.R.attr.state_pressed}, {android.R.attr.state_focused},
+            {android.R.attr.state_activated}, {}
+        }, new int[]{Color.BLACK, Color.BLACK, Color.BLACK, Color.WHITE});
+        view.setTextColor(colors);
+        view.setCompoundDrawableTintList(colors);
+    }
+    static void menuPill(TextView view, int icon) {
+        Context context = view.getContext();
+        StateListDrawable states = new StateListDrawable();
+        for (int state : new int[]{android.R.attr.state_pressed, android.R.attr.state_focused,
+                android.R.attr.state_activated}) {
+            states.addState(new int[]{state}, surface(context, FOCUS, Color.TRANSPARENT, 21));
+        }
+        GradientDrawable glass = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
+                new int[]{0x2EFFFFFF, 0x14FFFFFF});
+        glass.setCornerRadius(dp(context, 21));
+        glass.setStroke(dp(context, 1), 0x38FFFFFF);
+        states.addState(new int[]{}, glass);
+        view.setBackground(states);
+        view.setFocusable(true);
+        view.setClickable(true);
+        view.setPadding(dp(context, 13), 0, dp(context, 13), 0);
+        menuIcon(view, icon);
+        hoverFocus(view);
+    }
     static void button(TextView view, int rest) {
         view.setFocusable(true); view.setClickable(true); view.setTextColor(ink(INK));
         view.setBackground(focus(view.getContext(), rest));
@@ -81,15 +111,40 @@ final class Ui {
         private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
         private final RectF rect = new RectF();
         private final Path path = new Path();
+        private final Drawable inputIcon;
         private boolean active;
-        Glyph(Context context, String value) { super(context); kind=value; setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO); }
-        void active(boolean value) { if(active!=value){active=value;invalidate();} }
+        Glyph(Context context, String value) {
+            super(context);
+            kind = value;
+            inputIcon = kind.equals("hdmi") ? context.getDrawable(R.drawable.ic_menu_input).mutate() : null;
+            setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);
+        }
+        void active(boolean value) {
+            if (active == value) return;
+            active = value;
+            if (inputIcon != null) inputIcon.setTint(active ? Color.BLACK : Color.WHITE);
+            invalidate();
+        }
+        @Override protected void onSizeChanged(int width, int height, int oldWidth, int oldHeight) {
+            if (inputIcon == null) return;
+            int size = Math.min(inputIcon.getIntrinsicWidth(), Math.min(width, height));
+            int x = (width - size) / 2, y = (height - size) / 2;
+            inputIcon.setBounds(x, y, x + size, y + size);
+        }
         @Override protected void onDraw(Canvas c) {
+            if (inputIcon != null) {
+                inputIcon.draw(c);
+                return;
+            }
             c.save(); c.translate((getWidth()-Ui.dp(getContext(),24))/2f,(getHeight()-Ui.dp(getContext(),24))/2f);
             float s=Ui.dp(getContext(),24)/24f;c.scale(s,s);
             paint.setColor(active?DARK:ACCENT);paint.setStyle(Paint.Style.STROKE);
             paint.setStrokeWidth(1.5f);paint.setStrokeCap(Paint.Cap.ROUND);paint.setStrokeJoin(Paint.Join.ROUND);
-            if(kind.equals("apps")) {
+            if(kind.equals("usb")) {
+                c.drawLine(12,21,12,4,paint);c.drawLine(12,4,9,7,paint);c.drawLine(12,4,15,7,paint);
+                path.reset();path.moveTo(12,16);path.lineTo(6,12);path.lineTo(6,9);c.drawPath(path,paint);c.drawCircle(6,8,1.5f,paint);
+                path.reset();path.moveTo(12,13);path.lineTo(18,10);path.lineTo(18,7);c.drawPath(path,paint);rect.set(16.5f,4,19.5f,7);c.drawRect(rect,paint);
+            } else if(kind.equals("apps")) {
                 for(int y=4;y<=14;y+=10)for(int x=4;x<=14;x+=10){rect.set(x,y,x+6,y+6);c.drawRoundRect(rect,1,1,paint);}
             } else if(kind.equals("wifi")) {
                 rect.set(1,4,23,26);c.drawArc(rect,222,96,false,paint);

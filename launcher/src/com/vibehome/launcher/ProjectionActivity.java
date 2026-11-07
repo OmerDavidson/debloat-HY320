@@ -2,8 +2,6 @@ package com.vibehome.launcher;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.ComponentName;
-import android.content.Intent;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -59,7 +57,7 @@ public final class ProjectionActivity extends Activity {
         LinearLayout root = column(); root.setPadding(dp(36),dp(22),dp(36),dp(18)); root.setBackgroundColor(BG);
         LinearLayout heading = row(); heading.setGravity(Gravity.CENTER_VERTICAL);
         heading.addView(text("Projector",28,INK),new LinearLayout.LayoutParams(0,dp(48),1));
-        TextView back = button("Back to home",this::finish); heading.addView(back); root.addView(heading);
+        TextView back = button("Back to settings",this::finish); heading.addView(back); root.addView(heading);
         root.addView(text("Find your picture. Preview every adjustment first.",13,MUTED)); gap(root,18);
         LinearLayout tabs = row();
         for (String item : new String[]{"mode","zoom","keystone"}) {
@@ -85,8 +83,7 @@ public final class ProjectionActivity extends Activity {
         review=button("Review draft",this::reviewDraft); bottom.addView(review,new LinearLayout.LayoutParams(0,dp(42),1));
         TextView reset=button("Discard preview",() -> { zoom=100;mode=-1;corners=state.geometry==null?null:state.geometry.clone();renderControls(); });
         bottom.addView(reset,new LinearLayout.LayoutParams(0,dp(42),1));
-        TextView vendor=button("Original controls ↗",this::originalControls);
-        bottom.addView(vendor,new LinearLayout.LayoutParams(0,dp(42),1));root.addView(bottom);
+        root.addView(bottom);
         setContentView(root);renderControls();back.requestFocus();
     }
 
@@ -175,11 +172,6 @@ public final class ProjectionActivity extends Activity {
                     Toast.makeText(this,"Draft saved. Projected picture unchanged.",Toast.LENGTH_LONG).show();
                 }).show();
         } catch(Exception error){Toast.makeText(this,"Unable to prepare this draft.",Toast.LENGTH_LONG).show();}
-    }
-
-    private void originalControls(){
-        try{startActivity(new Intent(Intent.ACTION_MAIN).setComponent(new ComponentName("com.htc.htcsettings","com.htc.activity.ProjectionActivity3")));}
-        catch(android.content.ActivityNotFoundException|SecurityException error){Toast.makeText(this,"Original controls unavailable",Toast.LENGTH_LONG).show();}
     }
 
     private final class Picture extends View {
