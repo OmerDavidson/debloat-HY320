@@ -2,6 +2,18 @@
 
 A lightweight, native Android launcher for our Allwinner H713 / Android 11 HY320, plus reproducible ADB diagnostics. Built for a 1 GB device: bounded icons, native views, no WebView, no downloaded backgrounds, and no continuous background monitoring.
 
+## Comparison with the legacy launcher
+
+On the tested HY320, a short matched test alternated the actual default Home between Vibe 0.8.0 and HTCLauncherEN. The warm idle-Home medians were:
+
+| Measurement | Legacy launcher | Vibe | Observed difference |
+|---|---:|---:|---|
+| Launcher process RAM (PSS) | 89.6 MiB | 40.7 MiB | 54.6% smaller Vibe footprint |
+| Whole-device CPU busy | 47.1% | 8.8% | 81.2% less sampled idle CPU activity |
+| Available system RAM | 369.3 MiB | 360.7 MiB | No overall RAM saving demonstrated |
+
+The old launcher's foreground keep-alive service remained resident after switching to Vibe, so the smaller Vibe process did not translate into more available system memory in this test. Results are short sequential samples on one device; they do not establish playback, navigation-speed, power or long-term improvements. See the [full comparison and methodology](launcher/DEFAULT_LAUNCHER_COMPARISON_REPORT.md).
+
 ## Screenshots
 
 ![Vibe Home on the HY320 with favorite pins, a focused tile, and the blurred next row](docs/screenshots/home.png)
