@@ -40,15 +40,24 @@ def main():
         for dex in sorted((BUILD / "dex").glob("*.dex")):
             archive.write(dex, dex.name)
     run(TOOLS / "zipalign", "-f", "4", BUILD / "unsigned.apk", BUILD / "aligned.apk")
-    keystore = ROOT / "local-debug.keystore"
+    configured_keystore = os.environ.get("VIBE_KEYSTORE")
+    keystore = Path(configured_keystore) if configured_keystore else ROOT / "local-debug.keystore"
+    if configured_keystore and not keystore.is_file():
+        raise SystemExit("VIBE_KEYSTORE does not point to a file.")
     if not keystore.exists():
         run("keytool", "-genkeypair", "-keystore", keystore, "-storepass", "android", "-keypass", "android",
             "-alias", "vibe-local", "-keyalg", "RSA", "-keysize", "2048", "-validity", "3650",
             "-dname", "CN=Vibe Home Local Prototype")
         keystore.chmod(0o600)
     apk = BUILD / "vibe-home.apk"
-    run(TOOLS / "apksigner", "sign", "--ks", keystore, "--ks-key-alias", "vibe-local",
-        "--ks-pass", "pass:android", "--out", apk, BUILD / "aligned.apk")
+    if configured_keystore:
+        if not all(os.environ.get(name) for name in ("VIBE_KEY_ALIAS", "VIBE_KEYSTORE_PASSWORD", "VIBE_KEY_PASSWORD")):
+            raise SystemExit("Set VIBE_KEY_ALIAS, VIBE_KEYSTORE_PASSWORD and VIBE_KEY_PASSWORD for the configured keystore.")
+        signing = ["--ks-key-alias", os.environ["VIBE_KEY_ALIAS"],
+                   "--ks-pass", "env:VIBE_KEYSTORE_PASSWORD", "--key-pass", "env:VIBE_KEY_PASSWORD"]
+    else:
+        signing = ["--ks-key-alias", "vibe-local", "--ks-pass", "pass:android"]
+    run(TOOLS / "apksigner", "sign", "--ks", keystore, *signing, "--out", apk, BUILD / "aligned.apk")
     run(TOOLS / "apksigner", "verify", "--verbose", apk)
     record = {"apk": apk.name, "bytes": apk.stat().st_size,
               "sha256": hashlib.sha256(apk.read_bytes()).hexdigest(),

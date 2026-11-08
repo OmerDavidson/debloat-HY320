@@ -24,7 +24,9 @@ The Edit screenshot predates the pin placement shown in the Home screenshot.
 
 ## Install the launcher
 
-These steps build a locally signed APK and install it with ADB. The tested projector is the Allwinner H713 HY320 running Android 11 and firmware `UI_Veng.projector.20241225.164550`.
+**No build tools needed:** follow the [step-by-step USB installation guide](INSTALL.md). It covers downloading an APK, installing it with the remote, and returning to the original launcher.
+
+The following developer instructions build a locally signed APK and install it with ADB. The tested projector is the Allwinner H713 HY320 running Android 11 and firmware `UI_Veng.projector.20241225.164550`.
 
 1. **Install the build tools.** You need Python 3, JDK 17, and an Android SDK with Platform 34, Build Tools 34.0.0, and Platform Tools. Put `adb`, `javac`, and `keytool` on your PATH. The build defaults to `~/Library/Android/sdk` on macOS. Set `ANDROID_SDK_ROOT` if your SDK is elsewhere.
 
@@ -67,3 +69,11 @@ See the [launcher README](launcher/README.md) for build overrides and device che
 Both projects are cloned under `references/` and excluded by the root `.gitignore`. Vibe's menu uses three CleanYourTV vector icons for Wi-Fi, Settings and HDMI. Their MIT notice is included in the APK and in [CLEANYOURTV-LICENSE.txt](launcher/CLEANYOURTV-LICENSE.txt). Installed app icons and TV banners belong to their respective owners and are loaded from apps on the device.
 
 Vendor APK/framework inspection stays local under ignored `research/vendor-settings/`. It is evidence for this specific firmware, not a source of bundled vendor code or assets. No system-signing key or privileged UID is used.
+
+## Privacy
+
+Vibe Home does not send personal data to the developer or an analytics service. It uses and stores some information locally to operate; see the [privacy disclosure](PRIVACY.md) for details.
+
+## License
+
+This project is licensed under the [MIT License](LICENSE). Third-party assets retain their respective licenses and ownership as described above.

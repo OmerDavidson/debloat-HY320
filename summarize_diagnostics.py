@@ -9,6 +9,20 @@ from pathlib import Path
 import re
 
 
+def csv_cell(value):
+    """Keep device-supplied metadata as text in spreadsheet imports.
+
+    CSV quoting protects delimiters, not formulas. Preserve the original evidence
+    and neutralize only the exported representation, including leading whitespace.
+    """
+    if isinstance(value, str):
+        start = value.lstrip()
+        if (start.startswith(("=", "+", "-", "@", "＝", "＋", "－", "＠"))
+                or value.startswith(("\t", "\r", "\n"))):
+            return "'" + value
+    return value
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("baseline", type=Path)
@@ -70,7 +84,9 @@ def main():
     if {row["package"] for row in rows} != sysapps | userapps:
         raise SystemExit("Inventory differs from system/user package lists; inspect evidence before summarizing")
     with (base / "applications.csv").open("w", newline="") as file:
-        writer = csv.DictWriter(file, fieldnames=list(rows[0])); writer.writeheader(); writer.writerows(rows)
+        writer = csv.DictWriter(file, fieldnames=list(rows[0]))
+        writer.writeheader()
+        writer.writerows({key: csv_cell(value) for key, value in row.items()} for row in rows)
     summary = {"baseline": str(base), "evidence_hashes_verified": True,
                "model": props.get("ro.product.model"), "firmware": props.get("ro.build.display.id"),
                "kernel": read("identity").splitlines()[1],

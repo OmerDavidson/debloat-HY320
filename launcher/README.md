@@ -1,6 +1,8 @@
 # Vibe Home
 
-A small, offline Android launcher for the diagnosed HY320 / Allwinner H713. **Version 0.14.0** places the pin icon above the upper-left corner of each favorite's artwork. The header has **Inputs**, **Edit** and **Settings**, with default launcher selection under **Settings → About**.
+A small, offline Android launcher for the diagnosed HY320 / Allwinner H713. **Version 0.14.4** removes nine unused legacy permission declarations after user approval. On the projector, the update reduced Vibe's actual Android permission grants from seven to zero, including the implicit coarse location grant. Remote navigation, Wi-Fi and Bluetooth shortcuts, projector settings, and About passed with Vibe still selected as HOME. See the [device verification](test-results/20261108-security-WmLWRX/device-verification.json). The header has **Inputs**, **Edit** and **Settings**, with default launcher selection under **Settings → About**.
+
+Vibe Home does not send personal data to the developer or an analytics service. It uses and stores some information locally to operate; see the [privacy disclosure](../PRIVACY.md).
 
 The [matched default-launcher comparison](DEFAULT_LAUNCHER_COMPARISON_REPORT.md) tests Vibe against HTCLauncherEN on the actual projector. It distinguishes the active launcher's footprint and idle CPU from whole-system available RAM, including the old launcher's retained foreground service.
 
@@ -69,6 +71,8 @@ python3 launcher/build.py
 
 The build never invokes ADB or downloads dependencies. `launcher/build/vibe-home.apk` is signed with the existing local prototype key. `build/artifact.json` records the APK and source hashes. Keep `local-debug.keystore` for compatible updates; its conventional development password is unsuitable for public releases. SDK paths can be overridden with `ANDROID_SDK_ROOT`, `VIBE_BUILD_TOOLS`, and `VIBE_PLATFORM`.
 
+GitHub Actions builds an APK and SHA-256 checksum on every push. See [CI signing](../.github/SIGNING.md) for persistent release-key setup and temporary-build limitations, and the [USB installation guide](../INSTALL.md) for users.
+
 The user has authorized installing and opening this app for testing:
 
 ```sh
@@ -85,7 +89,7 @@ python3 launcher/check_ui.py --serial 192.168.10.15:5555 --check-home-picker
 
 The UI check exercises Home app options, the Android and vendor settings shortcuts, and About. The optional picker check opens and cancels Android's default launcher UI and compares the starting and ending HOME resolver. Evidence goes to the ignored `test-results/` directory.
 
-The manifest targets API 30, supports API 26+, includes no native ABI libraries and retains the existing permissions for compatible updates. An exported HOME alias is disabled by default. This avoids the automatic chooser caused by registering a second enabled HOME candidate on this firmware. The Use Vibe Home action can enable the alias and request the OS selection flow.
+The manifest targets API 30, supports API 26+, includes no native ABI libraries and requests no Android permissions. An exported HOME alias is disabled by default. This avoids the automatic chooser caused by registering a second enabled HOME candidate on this firmware. The Use Vibe Home action can enable the alias and request the OS selection flow.
 
 Its draft provider is read-only and UID-guarded. The one-shot hardware probe/test remains separately gated, never automatically invoked by home navigation. No projection write has been approved or performed.
 

@@ -737,7 +737,7 @@ public final class MainActivity extends Activity {
         for(int i=0;i<content.getChildCount();i++)if(content.getChildAt(i).isFocusable()){content.getChildAt(i).requestFocus();break;}
     }
     private void showAbout(){
-        LinearLayout info=sheet("About Vibe Home","VERSION 0.14.3");
+        LinearLayout info=sheet("About Vibe Home","VERSION 0.14.4");
         aboutLauncherStatus=text("",14,Ui.MUTED);
         refreshLauncherStatus();
         info.addView(aboutLauncherStatus);
