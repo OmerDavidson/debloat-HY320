@@ -7,15 +7,15 @@ Vibe has been tested on one Allwinner H713 HY320 running Android 11, firmware `U
 ## 1. Get the APK
 
 1. Open the project's [Releases page](https://github.com/oshriagronov/debloat-HY320/releases).
-2. Open a release and download **vibe-home.apk** from its **Assets** section. Do not download the source-code ZIP.
+2. Open a release and download **vibe-home-&lt;version&gt;.apk** from its **Assets** section (for example, `vibe-home-0.14.4.apk`). Do not download the source-code ZIP.
 3. Copy the APK to your USB drive, then safely eject the drive from your computer.
 
-An APK only appears on the Releases page after a maintainer publishes one. If none is available, the [build instructions](README.md#install-the-launcher) are available to developers. Builds for individual pushes are also available as [Actions artifacts](https://github.com/oshriagronov/debloat-HY320/actions) when the workflow has run; downloading these may require a GitHub account. Open a successful **Build APK** run, download its artifact ZIP, and extract `launcher/build/vibe-home.apk`. These are development builds, not necessarily tested releases. Read `signing-info.txt` in the ZIP before installing: a temporary-key build cannot update another installation.
+An APK only appears on the Releases page after a maintainer publishes one. If none is available, the [build instructions](README.md#install-the-launcher) are available to developers. Builds for individual pushes are also available as [Actions artifacts](https://github.com/oshriagronov/debloat-HY320/actions) when the workflow has run; downloading these may require a GitHub account. Open a successful **Build APK** run, download its artifact ZIP, and extract the versioned APK from `launcher/build/`. These are development builds, not necessarily tested releases. Read `signing-info.txt` in the ZIP before installing: a temporary-key build cannot update another installation.
 
 ## 2. Install on the projector
 
 1. Plug the USB drive into the projector.
-2. Use the projector's file manager or USB media browser to find and open **vibe-home.apk**.
+2. Use the projector's file manager or USB media browser to find and open the **vibe-home-&lt;version&gt;.apk** file.
 3. If Android asks you to allow this file manager to install unknown apps, follow the on-screen settings and allow it. Return to the APK and open it again if needed.
 4. Select **Install**, then **Open**.
 

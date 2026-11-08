@@ -69,14 +69,14 @@ Requires the installed JDK 17, Android platform 34 and build-tools 34.0.0:
 python3 launcher/build.py
 ```
 
-The build never invokes ADB or downloads dependencies. `launcher/build/vibe-home.apk` is signed with the existing local prototype key. `build/artifact.json` records the APK and source hashes. Keep `local-debug.keystore` for compatible updates; its conventional development password is unsuitable for public releases. SDK paths can be overridden with `ANDROID_SDK_ROOT`, `VIBE_BUILD_TOOLS`, and `VIBE_PLATFORM`.
+The build never invokes ADB or downloads dependencies. `launcher/build/vibe-home-<version>.apk` is named for the manifest version and signed with the existing local prototype key. `build/artifact.json` records the APK and source hashes. Keep `local-debug.keystore` for compatible updates; its conventional development password is unsuitable for public releases. SDK paths can be overridden with `ANDROID_SDK_ROOT`, `VIBE_BUILD_TOOLS`, and `VIBE_PLATFORM`.
 
 GitHub Actions builds an APK and SHA-256 checksum on every push. See [CI signing](../.github/SIGNING.md) for persistent release-key setup and temporary-build limitations, and the [USB installation guide](../INSTALL.md) for users.
 
 The user has authorized installing and opening this app for testing:
 
 ```sh
-adb -s 192.168.10.15:5555 install --no-incremental -r launcher/build/vibe-home.apk
+adb -s 192.168.10.15:5555 install --no-incremental -r launcher/build/vibe-home-*.apk
 adb -s 192.168.10.15:5555 shell am start -W -n com.vibehome.launcher/.MainActivity
 python3 launcher/check_ui.py --serial 192.168.10.15:5555
 # Check the dropdown and opening/returning from vendor HDMI and USB browsers.

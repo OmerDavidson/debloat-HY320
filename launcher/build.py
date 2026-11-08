@@ -4,8 +4,10 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import subprocess
+import xml.etree.ElementTree as ET
 import zipfile
 
 ROOT = Path(__file__).resolve().parent
@@ -22,6 +24,9 @@ def run(*argv):
 def main():
     if not ANDROID.is_file() or not (TOOLS / "aapt2").is_file():
         raise SystemExit("Install Android SDK platform 34 / build-tools 34.0.0, or set VIBE_PLATFORM / VIBE_BUILD_TOOLS.")
+    version = ET.parse(ROOT / "AndroidManifest.xml").getroot().get("{http://schemas.android.com/apk/res/android}versionName", "")
+    if not re.fullmatch(r"[0-9A-Za-z][0-9A-Za-z._-]*", version):
+        raise SystemExit("Manifest versionName must be a nonempty filename-safe version.")
     # Remove generated output only, never device state or source files.
     if BUILD.exists():
         shutil.rmtree(BUILD)
@@ -49,7 +54,7 @@ def main():
             "-alias", "vibe-local", "-keyalg", "RSA", "-keysize", "2048", "-validity", "3650",
             "-dname", "CN=Vibe Home Local Prototype")
         keystore.chmod(0o600)
-    apk = BUILD / "vibe-home.apk"
+    apk = BUILD / f"vibe-home-{version}.apk"
     if configured_keystore:
         if not all(os.environ.get(name) for name in ("VIBE_KEY_ALIAS", "VIBE_KEYSTORE_PASSWORD", "VIBE_KEY_PASSWORD")):
             raise SystemExit("Set VIBE_KEY_ALIAS, VIBE_KEYSTORE_PASSWORD and VIBE_KEY_PASSWORD for the configured keystore.")

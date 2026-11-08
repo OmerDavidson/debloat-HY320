@@ -38,7 +38,7 @@ The following developer instructions build a locally signed APK and install it w
    python3 launcher/build.py
    ```
 
-   The APK is written to `launcher/build/vibe-home.apk`. Keep the generated `launcher/local-debug.keystore` private and reuse it for updates. Android requires updates to use the same signing key as the installed copy.
+   The APK is written to `launcher/build/vibe-home-<version>.apk`, using the app version from the manifest. Keep the generated `launcher/local-debug.keystore` private and reuse it for updates. Android requires updates to use the same signing key as the installed copy.
 
 3. **Connect to the projector.** Enable ADB debugging in the projector’s Developer options. For a projector with network ADB enabled, connect the computer and projector to the same network, replace the example address with your projector’s address, and approve the debugging prompt if it appears.
 
@@ -53,7 +53,7 @@ The following developer instructions build a locally signed APK and install it w
 4. **Install and open Vibe Home.**
 
    ```sh
-   adb -s "$projector" install --no-incremental -r launcher/build/vibe-home.apk
+   adb -s "$projector" install --no-incremental -r launcher/build/vibe-home-*.apk
    adb -s "$projector" shell am start -W -n com.vibehome.launcher/.MainActivity
    ```
 

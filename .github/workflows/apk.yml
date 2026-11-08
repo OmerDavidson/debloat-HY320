@@ -42,13 +42,13 @@ jobs:
           fi
           python3 launcher/build.py
           cd launcher/build
-          sha256sum vibe-home.apk > SHA256SUMS.txt
+          sha256sum vibe-home-*.apk > SHA256SUMS.txt
       - name: Upload APK and checksum
         uses: actions/upload-artifact@v4
         with:
           name: vibe-home-${{ github.sha }}
           path: |
-            launcher/build/vibe-home.apk
+            launcher/build/vibe-home-*.apk
             launcher/build/SHA256SUMS.txt
             launcher/build/artifact.json
             signing-info.txt
