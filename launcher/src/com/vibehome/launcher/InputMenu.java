@@ -25,13 +25,16 @@ import android.widget.Toast;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import org.json.JSONObject;
 
-/** On-demand source menu. Delegates selection to the installed vendor apps. */
+/** On-demand source menu. */
 final class InputMenu {
-    private static final ComponentName HDMI = new ComponentName("com.softwinner.awlivetv","com.softwinner.awlivetv.MainActivity");
+    static final ComponentName HDMI = new ComponentName("com.softwinner.awlivetv","com.softwinner.awlivetv.MainActivity");
     private static final ComponentName FILES = new ComponentName("com.softwinner.TvdFileManager","com.softwinner.TvdFileManager.MainUI");
     private final Activity activity;
     private final ExecutorService worker;
@@ -51,10 +54,10 @@ final class InputMenu {
         @Override public void onReceive(Context context,Intent intent){refresh();}
     };
     private static final class Source {
-        final String key, label, detail, glyph;
+        final String key, label, detail, inputId;
         final boolean connected, available;
-        Source(String key,String label,String detail,String glyph,boolean connected,boolean available){
-            this.key=key;this.label=label;this.detail=detail;this.glyph=glyph;this.connected=connected;this.available=available;
+        Source(String key,String label,String detail,boolean connected,boolean available,String inputId){
+            this.key=key;this.label=label;this.detail=detail;this.connected=connected;this.available=available;this.inputId=inputId;
         }
     }
     InputMenu(Activity activity,ExecutorService worker){
@@ -108,30 +111,44 @@ final class InputMenu {
     }
     private List<Source> discover(){
         List<Source> sources=new ArrayList<>();
-        // The HAL advertises unused HDMI/AV ports too. Use the same configured
-        // source list as the stock launcher, rather than inventing physical ports.
+        List<HdmiSources.Configured> configured=new ArrayList<>();
+        List<Source> otherSources=new ArrayList<>();
+        boolean canOpen=launchable(HDMI);
+        // Some firmware identifies real ports in this file; many devices lack it.
         try(BufferedReader reader=new BufferedReader(new FileReader("/product/etc/config.ini"))){
             StringBuilder raw=new StringBuilder();String line;
             while((line=reader.readLine())!=null)if(!line.trim().startsWith("#"))raw.append(line).append('\n');
             JSONObject config=new JSONObject(raw.toString());
             String[] keys=config.optString("sourceList","").split(","),labels=config.optString("sourceListTitle","").split(",");
-            List<TvInputInfo> inputs=tv==null?new ArrayList<>():tv.getTvInputList();
-            boolean canOpen=launchable(HDMI);
             for(int i=0;i<keys.length;i++){
-                String key=keys[i].trim();if(!key.matches("HDMI[1-3]|CVBS[1-2]|VGA"))continue;
+                String key=keys[i].trim().toUpperCase(Locale.ROOT);if(!key.matches("HDMI[0-9]*|CVBS[0-9]*|VGA"))continue;
                 String label=i<labels.length&&!labels[i].trim().isEmpty()?labels[i].trim():key;
-                String status="Status unavailable";boolean connected=false;
-                // These IDs and the HDMI2 mapping were checked against this firmware.
-                String id=key.startsWith("HDMI")?"com.softwinner.vis/.HdmiInputService/HW"+key.substring(4):null;
-                for(TvInputInfo input:inputs)if(input.getId().equals(id)){
-                    int state=tv.getInputState(id);connected=state==TvInputManager.INPUT_STATE_CONNECTED;
-                    status=connected?"Connected":state==TvInputManager.INPUT_STATE_CONNECTED_STANDBY?"Standby":"Not connected";break;
-                }
-                sources.add(new Source(key,label,canOpen?status:"Unavailable",key.startsWith("HDMI")?"hdmi":"inputs",connected,canOpen));
+                if(key.startsWith("HDMI"))configured.add(new HdmiSources.Configured(key,label));
+                else otherSources.add(new Source(key,label,canOpen?"Status unavailable":"Unavailable",false,canOpen,null));
             }
-        }catch(Exception error){
-            sources.add(new Source("unavailable","Projector inputs","Unable to read input configuration","hdmi",false,false));
+        }catch(Exception ignored){} // Android discovery also works without this optional file.
+        List<HdmiSources.Input> inputs=new ArrayList<>();Map<String,Integer> states=new HashMap<>();
+        try{
+            if(tv!=null)for(TvInputInfo input:tv.getTvInputList()){
+                try{
+                    if(input.getType()!=TvInputInfo.TYPE_HDMI||!input.isPassthroughInput())continue;
+                    boolean hidden=false;try{hidden=input.isHidden(activity);}catch(RuntimeException ignored){}
+                    if(hidden)continue;
+                    String id=input.getId();CharSequence label=null;
+                    try{label=input.loadLabel(activity);}catch(RuntimeException ignored){}
+                    inputs.add(new HdmiSources.Input(id,label==null?"HDMI":label.toString()));
+                    try{states.put(id,tv.getInputState(id));}catch(RuntimeException ignored){}
+                }catch(RuntimeException ignored){}
+            }
+        }catch(RuntimeException ignored){}
+        for(HdmiSources.Choice choice:HdmiSources.choose(configured,inputs)){
+            Integer state=states.get(choice.inputId);boolean connected=state!=null&&state==TvInputManager.INPUT_STATE_CONNECTED;
+            String status=state==null?"Status unavailable":connected?"Connected":state==TvInputManager.INPUT_STATE_CONNECTED_STANDBY?"Standby":"Not connected";
+            boolean available=choice.inputId!=null||canOpen;
+            sources.add(new Source(choice.key,choice.label,available?status:"Unavailable",connected,available,choice.inputId));
         }
+        if(sources.isEmpty())sources.add(new Source("unavailable","HDMI","Input unavailable",false,false,null));
+        sources.addAll(otherSources);
         boolean mounted=false,known=true;List<String> names=new ArrayList<>();
         try{
             StorageManager storage=(StorageManager)activity.getSystemService(Context.STORAGE_SERVICE);
@@ -141,7 +158,7 @@ final class InputMenu {
             }
         }catch(RuntimeException error){known=false;}
         boolean browser=launchable(FILES);
-        sources.add(new Source("usb","USB",!browser?"Media browser unavailable":mounted?String.join(" · ",names):known?"No drive connected":"Status unavailable","usb",mounted,browser));
+        sources.add(new Source("usb","USB",!browser?"Media browser unavailable":mounted?String.join(" · ",names):known?"No drive connected":"Status unavailable",mounted,browser,null));
         return sources;
     }
     private void render(List<Source> sources){
@@ -150,21 +167,25 @@ final class InputMenu {
         for(Source source:sources){
             if(source.key.equals("usb")&&rows.getChildCount()>0){View divider=new View(activity);divider.setBackgroundColor(0xFF424347);LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(-1,dp(1));p.setMargins(dp(12),dp(6),dp(12),dp(6));rows.addView(divider,p);}
             LinearLayout row=new LinearLayout(activity);row.setGravity(Gravity.CENTER_VERTICAL);row.setPadding(dp(12),0,dp(12),0);row.setTag(source.key);
-            Ui.Glyph icon=new Ui.Glyph(activity,source.glyph);row.addView(icon,new LinearLayout.LayoutParams(dp(24),dp(24)));
             TextView title=new TextView(activity);title.setText(source.label);title.setTextSize(15);title.setTextColor(Ui.INK);title.setSingleLine(true);
-            LinearLayout.LayoutParams label=new LinearLayout.LayoutParams(0,-2,1);label.setMarginStart(dp(12));row.addView(title,label);
+            row.addView(title,new LinearLayout.LayoutParams(0,-2,1));
             TextView status=new TextView(activity);status.setText((source.connected?"●  ":"")+source.detail);status.setTextSize(10);status.setTextColor(source.connected?0xFF51CB80:Ui.MUTED);status.setSingleLine(true);status.setEllipsize(android.text.TextUtils.TruncateAt.END);
             row.addView(status,new LinearLayout.LayoutParams(dp(132),-2));
             row.setFocusable(true);row.setFocusableInTouchMode(true);row.setClickable(true);row.setBackground(Ui.focus(activity,android.graphics.Color.TRANSPARENT));
             row.setContentDescription(source.label+", "+source.detail);
-            row.setOnFocusChangeListener((v,on)->{icon.active(on);title.setTextColor(on?Ui.DARK:Ui.INK);status.setTextColor(on?0xFF4B5550:source.connected?0xFF51CB80:Ui.MUTED);});
+            row.setOnFocusChangeListener((v,on)->{title.setTextColor(on?Ui.DARK:Ui.INK);status.setTextColor(on?0xFF4B5550:source.connected?0xFF51CB80:Ui.MUTED);});
             Ui.hoverFocus(row);
             row.setOnClickListener(v->{
                 if(!source.available){Toast.makeText(activity,source.detail,Toast.LENGTH_SHORT).show();return;}
                 // USB is a media browser, not a video signal. Allow browsing even
                 // without a drive; the vendor browser owns mounts and file access.
-                Intent intent=new Intent(Intent.ACTION_MAIN).setComponent(source.key.equals("usb")?FILES:HDMI).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                if(!source.key.equals("usb"))intent.putExtra("input_source",source.key);
+                Intent intent;
+                if(source.inputId!=null){
+                    intent=new Intent(activity,HdmiActivity.class).putExtra(HdmiActivity.INPUT_ID,source.inputId);
+                }else{
+                    intent=new Intent(Intent.ACTION_MAIN).setComponent(source.key.equals("usb")?FILES:HDMI).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                    if(!source.key.equals("usb"))intent.putExtra("input_source",source.key);
+                }
                 dismiss();try{activity.startActivity(intent);}catch(android.content.ActivityNotFoundException|SecurityException error){Toast.makeText(activity,"Input unavailable on this firmware",Toast.LENGTH_SHORT).show();}
             });
             // Touch focus must not consume the first tap on a different source.

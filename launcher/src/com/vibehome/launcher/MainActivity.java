@@ -279,8 +279,9 @@ public final class MainActivity extends Activity {
         editTab.setText(editing?"Done":"Edit");
         editTab.setActivated(editing);
         editHint.setVisibility(editing?View.VISIBLE:View.GONE);
-        if(!editing)return;
         HomeRowsGrid grid=(HomeRowsGrid)firstTile;
+        grid.setEditingAnimation(editing);
+        if(!editing)return;
         editHint.setText(grid.picked==null
                 ?"EDIT APPS   ·   OK to pick up   ·   Pinned apps are locked   ·   Back to finish"
                 :"MOVING APP   ·   Arrows to move   ·   OK to drop   ·   Back to cancel");
@@ -319,6 +320,7 @@ public final class MainActivity extends Activity {
         int windowStart=0,logicalSelection=0;
         int rowDirection;
         FrameLayout departing;
+        ValueAnimator editWiggle;
         float touchX,touchY;boolean swiping;
         HomeRowsGrid(List<App> values,int pinnedCount){
             super(MainActivity.this);display=values;this.pinnedCount=pinnedCount;
@@ -361,6 +363,25 @@ public final class MainActivity extends Activity {
             });
             setOnItemLongClickListener((parent,view,position,id)->{if(!editing)showAppOptions(display.get(windowStart+position));return true;});
             post(()->{if(!disposed&&isAttachedToWindow()){requestFocusFromTouch();selectLogical(logicalSelection);}});
+        }
+        void setEditingAnimation(boolean enabled){
+            if(enabled&&editWiggle!=null)return;
+            if(editWiggle!=null){editWiggle.cancel();editWiggle=null;}
+            for(int i=0;i<getChildCount();i++)((BannerCard)getChildAt(i)).tile.setRotation(0);
+            if(!enabled||!isAttachedToWindow()||!ValueAnimator.areAnimatorsEnabled())return;
+            // One shared clock keeps the small visible window moving only while editing.
+            editWiggle=ValueAnimator.ofFloat(0f,1f);
+            editWiggle.setDuration(700);
+            editWiggle.setInterpolator(new android.view.animation.LinearInterpolator());
+            editWiggle.setRepeatCount(ValueAnimator.INFINITE);
+            editWiggle.addUpdateListener(animation->{
+                float phase=(float)animation.getAnimatedValue();
+                for(int i=0;i<getChildCount();i++){
+                    float offset=((windowStart+i)%4)*.19f;
+                    ((BannerCard)getChildAt(i)).tile.setRotation((float)(1.15*Math.sin((phase+offset)*2*Math.PI)));
+                }
+            });
+            editWiggle.start();
         }
         void selectLogical(int position){
             selectLogical(position,false);
@@ -451,7 +472,7 @@ public final class MainActivity extends Activity {
             if(departing!=null){departing.animate().cancel();getOverlay().remove(departing);departing=null;}
             for(int i=0;i<getChildCount();i++){View child=getChildAt(i);child.animate().cancel();child.setTranslationY(0);}
         }
-        @Override protected void onDetachedFromWindow(){finishRowMotion();super.onDetachedFromWindow();}
+        @Override protected void onDetachedFromWindow(){setEditingAnimation(false);finishRowMotion();super.onDetachedFromWindow();}
         private void moveRow(int direction){
             int row=logicalSelection/4+direction;
             if(row<0||row>(display.size()-1)/4)return;
@@ -737,7 +758,7 @@ public final class MainActivity extends Activity {
         for(int i=0;i<content.getChildCount();i++)if(content.getChildAt(i).isFocusable()){content.getChildAt(i).requestFocus();break;}
     }
     private void showAbout(){
-        LinearLayout info=sheet("About Vibe Home","VERSION 0.14.4");
+        LinearLayout info=sheet("About Vibe Home","VERSION 0.14.8");
         aboutLauncherStatus=text("",14,Ui.MUTED);
         refreshLauncherStatus();
         info.addView(aboutLauncherStatus);
