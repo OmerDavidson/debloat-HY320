@@ -40,7 +40,13 @@ The following developer instructions build a locally signed APK and install it w
 
    The APK is written to `launcher/build/vibe-home-<version>.apk`, using the app version from the manifest. Keep the generated `launcher/local-debug.keystore` private and reuse it for updates. Android requires updates to use the same signing key as the installed copy.
 
-3. **Connect to the projector.** Enable ADB debugging in the projector’s Developer options. For a projector with network ADB enabled, connect the computer and projector to the same network, replace the example address with your projector’s address, and approve the debugging prompt if it appears.
+3. **Connect to the projector.** First, enable debugging on the HY320:
+
+   1. Open **Settings → Other Settings** on the projector.
+   2. If **Developer options** is visible, open it. Otherwise, find **About device → Build number**, press **OK** on it seven times, and return to **Developer options**. Menu names may vary by firmware.
+   3. Enable **USB debugging**. This also enables ADB debugging; there is no separate network debugging option on this projector. USB storage cannot mount while USB debugging is enabled, so turn it off when you need to use USB storage.
+
+   Connect the computer and projector to the same network, replace the example address with your projector’s address, and approve the debugging prompt if it appears.
 
    ```sh
    projector=192.168.1.50:5555

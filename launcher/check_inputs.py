@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Exercise the Inputs dropdown and vendor source apps on the authorized HY320.
+"""Exercise the Inputs dropdown, Android HDMI viewer, and USB browser on the authorized HY320.
 
 Opens HDMI and the USB file browser through ordinary UI. Never changes HOME,
 calibration, favorites, system-package state, or USB mounts. No drive is required;
@@ -136,8 +136,9 @@ def main():
         ui('hdmi-menu')
         key(23)
         ui('hdmi-viewer')
-        resumed('hdmi-activity.txt', 'com.softwinner.awlivetv')
-        shot('hdmi-viewer')
+        resumed('hdmi-activity.txt', 'com.vibehome.launcher/.HdmiActivity')
+        session = record('hdmi-session.txt', 'shell', 'dumpsys', 'tv_input')
+        assert 'inputId: com.softwinner.vis/.HdmiInputService/HW2' in session, 'HDMI input session missing'
         key(4)
         tree = ui('return-from-hdmi')
         assert 'Inputs' in texts(tree), 'Back did not return from HDMI'
@@ -163,7 +164,7 @@ def main():
         record('logcat.txt', 'shell', 'logcat', '-b', 'crash', '-b', 'main', '-d', '-v', 'threadtime', '-t', '1000')
         result = {'passed': True, 'serial': args.serial, 'projection_properties_checked': len(before), 'default_home_unchanged': True,
                   'system_package_states_unchanged': True, 'hdmi_viewer_opened': True, 'usb_browser_opened': True,
-                  'usb_volumes_at_test': volumes, 'physical_signal_and_usb_hotplug_verified': False}
+                  'usb_volumes_at_test': volumes, 'physical_picture_audio_and_usb_hotplug_verified': False}
         (output/'result.json').write_text(json.dumps(result, indent=2)+'\n')
     finally:
         (output/'commands.json').write_text(json.dumps(commands, indent=2)+'\n')

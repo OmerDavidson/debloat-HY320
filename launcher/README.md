@@ -1,6 +1,6 @@
 # Vibe Home
 
-A small, offline Android launcher for the diagnosed HY320 / Allwinner H713. **Version 0.14.4** removes nine unused legacy permission declarations after user approval. On the projector, the update reduced Vibe's actual Android permission grants from seven to zero, including the implicit coarse location grant. Remote navigation, Wi-Fi and Bluetooth shortcuts, projector settings, and About passed with Vibe still selected as HOME. See the [device verification](test-results/20261108-security-WmLWRX/device-verification.json). The header has **Inputs**, **Edit** and **Settings**, with default launcher selection under **Settings → About**.
+A small, offline Android launcher for the diagnosed HY320 / Allwinner H713. **Version 0.14.8** gives app tiles a gentle wiggle while editing. Version 0.14.7 removed the icons beside HDMI and USB in Inputs; version 0.14.6 improved HDMI input discovery; see the [HDMI investigation](HDMI_INVESTIGATION_REPORT.md). Version 0.14.4 removed nine unused permission declarations; see its [device verification](test-results/20261108-security-WmLWRX/device-verification.json). The header has **Inputs**, **Edit** and **Settings**, with default launcher selection under **Settings → About**.
 
 Vibe Home does not send personal data to the developer or an analytics service. It uses and stores some information locally to operate; see the [privacy disclosure](../PRIVACY.md).
 
@@ -16,7 +16,9 @@ The [matched default-launcher comparison](DEFAULT_LAUNCHER_COMPARISON_REPORT.md)
 
 The 0.14.0 device check confirmed that focused and resting pins sit fully outside the artwork and that all five rows retain the half-row preview. See the [device results](test-results/20261107-outside-pins/device-verification.json) and [projector screenshot](test-results/20261107-outside-pins/rows-final/row-0.png).
 
-Choose **Edit** beside Inputs, focus an unpinned tile and press **OK** to pick it up. The arrows move it within the unpinned apps. Press **OK** again to save the drop. **Back** cancels the current move, and **Done** or **Back** with no tile held exits Edit mode. Unpin a favorite before adding a fifth. When upgrading an older layout, the first four available favorites keep their pins and come first, and the other apps keep their relative saved order.
+Choose **Edit** beside Inputs; the visible app tiles wiggle gently until editing ends (unless Android animations are disabled). Focus an unpinned tile and press **OK** to pick it up. The arrows move it within the unpinned apps. Press **OK** again to save the drop. **Back** cancels the current move, and **Done** or **Back** with no tile held exits Edit mode. Unpin a favorite before adding a fifth. When upgrading an older layout, the first four available favorites keep their pins and come first, and the other apps keep their relative saved order.
+
+The 0.14.8 projector trial checked motion and its stop on exit, row navigation, and picking up, moving and cancelling an app. See the [results](test-results/20261109-edit-wiggle/verification.json) and [Edit screenshot](test-results/20261109-edit-wiggle/edit-inspect.png). Android's UI Automator could not reach an idle state while the wiggle was running, so the edit interaction was checked using screenshots and remote key events.
 
 The 0.13.0 projector checks covered the first-row pin lock, attempts to enter a pinned slot or add a fifth favorite, unpinned movement, and all five Home rows. See the [device results](test-results/20261107-locked-pins/device-verification.json), [row checks](test-results/20261107-locked-pins/rows/result.json) and [Edit screenshot](test-results/20261107-locked-pins/pinned-locked.png).
 
@@ -34,9 +36,15 @@ The HY320 test covered all five Home rows, the Settings shortcuts, and opening a
 
 ## Inputs
 
-The top-right **Inputs** button replaces Apps. OK/click or Down opens a compact, rounded dropdown over the current screen, with a white focused row, source icons and connection status. Back, Up from the first row, or an outside click dismisses it; Left/Right returns focus to the neighboring navigation button. The background and app artwork remain undimmed.
+The top-right **Inputs** button replaces Apps. OK/click or Down opens a compact, rounded dropdown over the current screen, with a white focused row, source names and connection status. Back, Up from the first row, or an outside click dismisses it; Left/Right returns focus to the neighboring navigation button. The background and app artwork remain undimmed.
 
-Sources follow the projector's own `/product/etc/config.ini` `sourceList`/`sourceListTitle`, rather than the unused ports also advertised by its generic TV HAL. This unit exposes **HDMI**, mapped by its firmware to **HDMI2**. Selecting it opens the installed vendor HDMI viewer with the same `input_source` extra used by stock. Connected/Standby/Not connected comes from Android's TV input state; it is not a guarantee of a visible HDMI picture.
+The 0.14.7 projector check verified the icon-free HDMI and USB rows and remote focus navigation. See the [results](test-results/20261109-input-labels/verification.json) and [dropdown screenshot](test-results/20261109-input-labels/hdmi-focused.png).
+
+Vibe discovers HDMI passthrough inputs reported by Android. Where the projector provides a source list, Vibe uses it to avoid advertising known unused inputs when the mapping is unambiguous. This unit exposes **HDMI**, mapped by its firmware to **HDMI2**. If the configuration is absent or the mapping is ambiguous, Vibe lists Android's HDMI inputs for the user to choose; some firmware may advertise ports that aren't physically present. Selecting a discovered input opens Android `TvView`, which still relies on the firmware's input service. When no Android input is reported, a configured source can use the original viewer if it is available. Connected/Standby/Not connected comes from Android's TV input state; it is not a guarantee of a visible HDMI picture.
+
+Vibe adds no no-signal screen over the input. When there is no video, the input service may show its own display or the screen may remain black; Back returns to Vibe.
+
+The [HDMI investigation](HDMI_INVESTIGATION_REPORT.md) explains the firmware-specific assumptions and a direct Android TV input experiment. The vendor HDMI viewer already uses the Android TV input framework; a direct viewer still depends on the firmware's input service.
 
 **USB** opens the installed vendor media browser. Mounted removable storage descriptions appear when available; otherwise the menu says **No drive connected**. USB storage is browsed as files, not treated as an HDMI video signal. The browser owns storage access and volume selection; Vibe requests no storage permission. Configuration/status work uses the existing worker. TV-input callbacks and a media-mount receiver run only while the dropdown is open, with stale-result guards after dismissal; there is no polling. See the [Inputs validation report](INPUTS_TEST_REPORT.md) for tested behavior and hardware limits.
 
@@ -53,7 +61,7 @@ This uses the public [Android home-role API](https://developer.android.com/refer
 
 ## Performance choices
 
-Native Java/Android Views only, with no runtime dependencies, Compose, WebView, network permission, background services, boot receivers, continuous polling or downloaded artwork. Native clocks update at minute granularity. Focus changes shader colors immediately. Finite property animations run only during interaction, with no idle animation or per-frame image decoding/blur. A down-row transition briefly retains up to four departing cards sharing existing artwork bitmaps; it does not create a screenshot or a second full grid.
+Native Java/Android Views only, with no runtime dependencies, Compose, WebView, network permission, background services, boot receivers, continuous polling or downloaded artwork. Native clocks update at minute granularity. Focus changes shader colors immediately. A single shared animation clock rotates visible tiles only while Edit mode is active; normal Home has no idle animation. There is no per-frame image decoding/blur. A down-row transition briefly retains up to four departing cards sharing existing artwork bitmaps; it does not create a screenshot or a second full grid.
 
 Home recycles card views and preserve Android's recycler metadata. Home keeps a small active-row/preview window instead of allowing native pixel scrolling to crop the active row. Banner rasters are **320 × 180**, with a **1 MiB** LRU cache; visible cards also retain their images. Icon rasters remain **72 × 72**, with a separate **384 KiB** cache. Blurred previews use **120 × 68** thumbnails and a **256 KiB** cache. One worker shares pending image requests. Weak, tagged targets prevent stale results populating reused cards, and an already populated visible target survives a cache eviction without being reloaded. Missing banners are remembered so they are not repeatedly requested. Blur runs on the image worker. Native banners are blurred directly from their loaded bitmap, while fallback tile snapshots are captured after layout. No live/full-screen blur is used.
 
@@ -79,7 +87,7 @@ The user has authorized installing and opening this app for testing:
 adb -s 192.168.10.15:5555 install --no-incremental -r launcher/build/vibe-home-*.apk
 adb -s 192.168.10.15:5555 shell am start -W -n com.vibehome.launcher/.MainActivity
 python3 launcher/check_ui.py --serial 192.168.10.15:5555
-# Check the dropdown and opening/returning from vendor HDMI and USB browsers.
+# Check the dropdown and opening/returning from Android HDMI and the USB browser.
 python3 launcher/check_inputs.py --serial 192.168.10.15:5555
 # Check every home row for clipping in both directions.
 python3 launcher/check_home_rows.py --serial 192.168.10.15:5555
