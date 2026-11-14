@@ -100,7 +100,7 @@ public final class MainActivity extends Activity {
     @Override public void onCreate(Bundle saved) {
         super.onCreate(saved);prefs=getSharedPreferences("home",MODE_PRIVATE);homeSwitcher=new HomeSwitcher(this);
         inputs=new InputMenu(this,worker);
-        settingsMenu=new SettingsMenu(this,this::showAbout);
+        settingsMenu=new SettingsMenu(this,this::showQuickWake,this::showAbout);
         if(saved!=null)lastApp=saved.getString("last_app","");
         getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_FULLSCREEN
             |View.SYSTEM_UI_FLAG_HIDE_NAVIGATION|View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
@@ -757,8 +757,50 @@ public final class MainActivity extends Activity {
         android.view.WindowManager.LayoutParams p=w.getAttributes();p.x=dp(28);w.setAttributes(p);
         for(int i=0;i<content.getChildCount();i++)if(content.getChildAt(i).isFocusable()){content.getChildAt(i).requestFocus();break;}
     }
+    private void showQuickWake(){
+        LinearLayout panel=sheet("Quick Wake","POWER BUTTON");
+        panel.addView(text("Press Power to sleep. Press it again to wake.",14,Ui.MUTED));
+        gap(panel,16);
+        android.widget.Switch toggle=new android.widget.Switch(this);
+        toggle.setText("Sleep on Power press");
+        toggle.setTextSize(14);
+        toggle.setTextColor(Ui.ink(Ui.INK));
+        toggle.setBackground(Ui.focus(this,Ui.RAISED));
+        toggle.setPadding(dp(14),0,dp(14),0);
+        toggle.setFocusableInTouchMode(true);
+        Ui.hoverFocus(toggle);
+        panel.addView(toggle,fill(54));
+        gap(panel,12);
+        TextView status=text("",12,Ui.MUTED);
+        panel.addView(status);
+        QuickWake quickWake=new QuickWake(this);
+        Runnable refresh=()->{
+            int behavior=quickWake.behavior();
+            toggle.setChecked(behavior==QuickWake.SLEEP);
+            boolean available=behavior==QuickWake.SLEEP||behavior==QuickWake.POWER_MENU;
+            boolean canChange=available&&quickWake.canChange();
+            toggle.setEnabled(canChange);
+            toggle.setFocusable(canChange);
+            status.setText(!available?"Unavailable on this firmware or power configuration."
+                    :!canChange?"One-time ADB setup required. See the Quick Wake guide on GitHub."
+                    :behavior==QuickWake.SLEEP?"Turn off to bring back the Power off / Restart menu."
+                    :"Power currently opens the Power off / Restart menu.");
+        };
+        refresh.run();
+        toggle.setOnCheckedChangeListener(new android.widget.CompoundButton.OnCheckedChangeListener(){
+            @Override public void onCheckedChanged(android.widget.CompoundButton button,boolean enabled){
+                if(!quickWake.setEnabled(enabled))toast("Couldn't change the Power button");
+                toggle.setOnCheckedChangeListener(null);
+                refresh.run();
+                toggle.setOnCheckedChangeListener(this);
+            }
+        });
+        gap(panel,16);
+        panel.addView(button("Back",()->{if(sheet!=null)sheet.dismiss();},Ui.RAISED),fill(42));
+        showSheet(panel);
+    }
     private void showAbout(){
-        LinearLayout info=sheet("About Vibe Home","VERSION 0.14.8");
+        LinearLayout info=sheet("About Vibe Home","VERSION 0.14.9");
         aboutLauncherStatus=text("",14,Ui.MUTED);
         refreshLauncherStatus();
         info.addView(aboutLauncherStatus);

@@ -30,6 +30,10 @@ Installing and opening Vibe does not change your default launcher.
 
 To return to the original launcher, open **Settings → About → Use original launcher**. If Android asks you to choose, select **HTCLauncherEN** and confirm. The original launcher remains installed.
 
+## Optional Quick Wake
+
+On supported firmware, **Settings → Quick Wake** lets the remote’s Power button sleep and wake the projector. See the [one-time ADB setup](boot-tune/README.md) to enable the switch.
+
 ## Updates and checksums
 
 An update must be signed with the same key as the installed version and have a compatible version code. If Android refuses an update, check which build you installed and its signing information. Removing Vibe to change signing keys also removes its local app data, including favorites; switch back to the original launcher first. Do not remove the original launcher.

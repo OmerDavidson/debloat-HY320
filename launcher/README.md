@@ -1,6 +1,6 @@
 # Vibe Home
 
-A small, offline Android launcher for the diagnosed HY320 / Allwinner H713. **Version 0.14.8** gives app tiles a gentle wiggle while editing. Version 0.14.7 removed the icons beside HDMI and USB in Inputs; version 0.14.6 improved HDMI input discovery; see the [HDMI investigation](HDMI_INVESTIGATION_REPORT.md). Version 0.14.4 removed nine unused permission declarations; see its [device verification](test-results/20261108-security-WmLWRX/device-verification.json). The header has **Inputs**, **Edit** and **Settings**, with default launcher selection under **Settings → About**.
+A small, offline Android launcher for the diagnosed HY320 / Allwinner H713. **Version 0.14.9** adds Quick Wake for the remote Power button. Version 0.14.8 gives app tiles a gentle wiggle while editing. Version 0.14.7 removed the icons beside HDMI and USB in Inputs; version 0.14.6 improved HDMI input discovery; see the [HDMI investigation](HDMI_INVESTIGATION_REPORT.md). Version 0.14.4 removed nine unused permission declarations; see its [device verification](test-results/20261108-security-WmLWRX/device-verification.json). The header has **Inputs**, **Edit** and **Settings**, with default launcher selection under **Settings → About**.
 
 Vibe Home does not send personal data to the developer or an analytics service. It uses and stores some information locally to operate; see the [privacy disclosure](../PRIVACY.md).
 
@@ -28,7 +28,7 @@ The 0.11.0 projector check covered all five Home rows and navigation between Inp
 
 ## Settings dropdown
 
-The top **Settings** pill opens a rounded dropdown with white focus and monochrome icons. OK, click or Down opens it. Back, Up from the first row or an outside click dismisses it. **Wi-Fi** opens Android TV network settings. **Bluetooth** opens Android TV Settings. Select Bluetooth there to open the system side panel on this firmware. **Projector settings** opens the original vendor settings home. **About** shows Vibe's version and default launcher controls.
+The top **Settings** pill opens a rounded dropdown with white focus and monochrome icons. OK, click or Down opens it. Back, Up from the first row or an outside click dismisses it. **Wi-Fi** opens Android TV network settings. **Bluetooth** opens Android TV Settings. Select Bluetooth there to open the system side panel on this firmware. **Projector settings** opens the original vendor settings home. **Quick Wake** offers an opt-in switch to sleep and wake with the remote's Power button. See the [Quick Wake setup guide](../boot-tune/README.md) for the one-time ADB permission and the supported firmware. **About** shows Vibe's version and default launcher controls.
 
 The separate Vibe settings and app drawer pages were removed in 0.10.0. The [hybrid settings trial](HYBRID_SETTINGS_TEST_REPORT.md) describes the earlier page. The [native parity report](SETTINGS_PARITY_REPORT.md) and [migration report](NATIVE_SETTINGS_MIGRATION_REPORT.md) record the older native settings trials.
 
@@ -97,7 +97,7 @@ python3 launcher/check_ui.py --serial 192.168.10.15:5555 --check-home-picker
 
 The UI check exercises Home app options, the Android and vendor settings shortcuts, and About. The optional picker check opens and cancels Android's default launcher UI and compares the starting and ending HOME resolver. Evidence goes to the ignored `test-results/` directory.
 
-The manifest targets API 30, supports API 26+, includes no native ABI libraries and requests no Android permissions. An exported HOME alias is disabled by default. This avoids the automatic chooser caused by registering a second enabled HOME candidate on this firmware. The Use Vibe Home action can enable the alias and request the OS selection flow.
+The manifest targets API 30, supports API 26+ and includes no native ABI libraries. It declares `WRITE_SECURE_SETTINGS` for Quick Wake, which requires a separate ADB grant. An exported HOME alias is disabled by default. This avoids the automatic chooser caused by registering a second enabled HOME candidate on this firmware. The Use Vibe Home action can enable the alias and request the OS selection flow.
 
 Its draft provider is read-only and UID-guarded. The one-shot hardware probe/test remains separately gated, never automatically invoked by home navigation. No projection write has been approved or performed.
 

@@ -20,11 +20,13 @@ import android.widget.Toast;
 final class SettingsMenu {
     private static final String ANDROID_TV = "com.android.tv.settings";
     private final Activity activity;
+    private final Runnable openQuickWake;
     private final Runnable openAbout;
     private PopupWindow popup;
 
-    SettingsMenu(Activity activity, Runnable openAbout) {
+    SettingsMenu(Activity activity, Runnable openQuickWake, Runnable openAbout) {
         this.activity = activity;
+        this.openQuickWake = openQuickWake;
         this.openAbout = openAbout;
     }
 
@@ -65,6 +67,7 @@ final class SettingsMenu {
         LinearLayout.LayoutParams line = new LinearLayout.LayoutParams(-1, dp(1));
         line.setMargins(dp(12), dp(5), dp(12), dp(5));
         rows.addView(divider, line);
+        addRow(rows, anchor, "Quick Wake", R.drawable.ic_menu_power, openQuickWake);
         addRow(rows, anchor, "About", R.drawable.ic_menu_info, openAbout);
 
         window.showAsDropDown(anchor, 0, dp(8), Gravity.END);
